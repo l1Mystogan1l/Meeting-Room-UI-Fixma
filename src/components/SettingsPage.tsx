@@ -5,10 +5,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
+
 import { Badge } from './ui/badge';
 import { Slider } from './ui/slider';
-import { ArrowLeft, Save, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, CheckCircle, XCircle, Clock, Upload, X } from 'lucide-react';
 
 interface AppSettings {
   roomName: string;
@@ -26,6 +26,10 @@ interface AppSettings {
   dateFormat: string;
   microsoftEnabled: boolean;
   googleEnabled: boolean;
+  logoUrl: string;
+  logoSize: number;
+  showWeather: boolean;
+  showLogo: boolean;
 }
 
 interface CalendarLog {
@@ -56,6 +60,10 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
   const [dateFormat, setDateFormat] = useState(settings.dateFormat);
   const [microsoftEnabled, setMicrosoftEnabled] = useState(settings.microsoftEnabled);
   const [googleEnabled, setGoogleEnabled] = useState(settings.googleEnabled);
+  const [logoUrl, setLogoUrl] = useState(settings.logoUrl);
+  const [logoSize, setLogoSize] = useState(settings.logoSize);
+  const [showWeather, setShowWeather] = useState(settings.showWeather);
+  const [showLogo, setShowLogo] = useState(settings.showLogo);
 
   // Mock calendar logs
   const [microsoftLogs] = useState<CalendarLog[]>([
@@ -90,7 +98,11 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
       temperatureUnit,
       dateFormat,
       microsoftEnabled,
-      googleEnabled
+      googleEnabled,
+      logoUrl,
+      logoSize,
+      showWeather,
+      showLogo
     };
     onSettingsUpdate(newSettings);
     console.log('Settings saved:', newSettings);
@@ -137,34 +149,66 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
     return fontSizeLabels[size] || 'Large (Default)';
   };
 
+  const getLogoSizeLabel = (size: number) => {
+    const logoSizeLabels: { [key: number]: string } = {
+      1: 'Extra Small (64px)',
+      2: 'Small (96px)',
+      3: 'Medium (128px)',
+      4: 'Large (160px)',
+      5: 'Extra Large (192px)',
+      6: 'Huge (224px)',
+      7: 'Massive (256px)',
+      8: 'Giant (288px)'
+    };
+    return logoSizeLabels[size] || 'Large (160px)';
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setLogoUrl(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoRemove = () => {
+    setLogoUrl('');
+  };
+
   return (
-    <div className="h-screen bg-black text-white flex flex-col">
+    <div className="h-screen w-screen fixed inset-0 bg-black text-white flex flex-col" style={{ overflow: 'auto' }}>
       {/* Header - Fixed */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-800">
-        <div className="flex items-center gap-4">
+      <div className="flex-shrink-0 bg-black border-b border-gray-800 z-50">
+        <div className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-gray-800 rounded-xl"
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <h1 className="text-3xl font-medium">Room Settings</h1>
+          </div>
+          
           <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-gray-800 rounded-xl"
-            onClick={onBack}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+            onClick={handleSave}
           >
-            <ArrowLeft className="h-6 w-6" />
+            <Save className="h-4 w-4 mr-2" />
+            Save Settings
           </Button>
-          <h1 className="text-3xl font-medium">Room Settings</h1>
         </div>
-        
-        <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
-          onClick={handleSave}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save Settings
-        </Button>
       </div>
 
       {/* Scrollable Settings Content */}
-      <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto w-full space-y-6 p-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto w-full space-y-6 p-6 pb-24">
         {/* Room Configuration */}
         <Card className="p-6 bg-gray-800 border-gray-700 rounded-2xl">
           <h2 className="text-xl font-medium text-white mb-4">Room Configuration</h2>
@@ -203,6 +247,88 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                 </div>
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="logo-upload" className="text-gray-300">Room Logo</Label>
+              <div className="mt-2 space-y-3">
+                {logoUrl ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={logoUrl} 
+                        alt="Logo Preview" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-300">Logo uploaded successfully</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-1 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                        onClick={handleLogoRemove}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Remove Logo
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center">
+                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-300 mb-2">Upload room logo</p>
+                    <p className="text-xs text-gray-500 mb-3">Supports PNG, JPG, SVG files</p>
+                    <label htmlFor="logo-upload" className="cursor-pointer">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="bg-blue-600/90 hover:bg-blue-700 text-white"
+                        asChild
+                      >
+                        <span>Choose File</span>
+                      </Button>
+                    </label>
+                  </div>
+                )}
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <div className="text-xs text-gray-500">
+                  The logo will be displayed in the top-right corner of the main screen
+                </div>
+              </div>
+            </div>
+
+            {logoUrl && (
+              <div>
+                <Label htmlFor="logo-size" className="text-gray-300">
+                  Logo Display Size
+                </Label>
+                <div className="mt-2 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Small</span>
+                    <span className="text-gray-300">{getLogoSizeLabel(logoSize)}</span>
+                    <span className="text-gray-400">Large</span>
+                  </div>
+                  <Slider
+                    id="logo-size"
+                    value={[logoSize]}
+                    onValueChange={(values) => setLogoSize(values[0])}
+                    min={1}
+                    max={8}
+                    step={1}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-gray-500">
+                    Adjust how large the logo appears on the main display
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div>
               <Label htmlFor="timeout" className="text-gray-300">Display Timeout (minutes)</Label>
@@ -246,6 +372,7 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600 rounded-xl">
                   <SelectItem value="full">Friday, September 19, 2025</SelectItem>
+                  <SelectItem value="weekday-day-month">Sunday 19, September, 2025</SelectItem>
                   <SelectItem value="short">Sep 19, 2025</SelectItem>
                   <SelectItem value="numeric">09/19/2025</SelectItem>
                   <SelectItem value="weekday-short">Fri, Sep 19</SelectItem>
@@ -274,6 +401,7 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600 rounded-xl">
+                  <SelectItem value="0">None (Full Screen)</SelectItem>
                   <SelectItem value="2">Thin (2px)</SelectItem>
                   <SelectItem value="4">Medium (4px)</SelectItem>
                   <SelectItem value="8">Thick (8px)</SelectItem>
@@ -302,6 +430,34 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                 id="show-weekend"
                 checked={showWeekend}
                 onCheckedChange={setShowWeekend}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-weather" className="text-gray-300">Show Weather Information</Label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Display current weather conditions on the main screen
+                </p>
+              </div>
+              <Switch
+                id="show-weather"
+                checked={showWeather}
+                onCheckedChange={setShowWeather}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-logo" className="text-gray-300">Show Room Logo</Label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Display the uploaded logo on the main screen
+                </p>
+              </div>
+              <Switch
+                id="show-logo"
+                checked={showLogo}
+                onCheckedChange={setShowLogo}
               />
             </div>
           </div>
@@ -447,7 +603,7 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                 <Clock className="h-4 w-4" />
                 Recent Activity
               </h4>
-              <ScrollArea className="h-24">
+              <div className="h-24 overflow-y-auto">
                 <div className="space-y-1">
                   {[...microsoftLogs.slice(0, 2), ...googleLogs.slice(0, 2)]
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -463,7 +619,7 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
         </Card>
@@ -491,7 +647,7 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
           </div>
         </Card>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

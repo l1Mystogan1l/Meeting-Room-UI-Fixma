@@ -43,6 +43,10 @@ interface AppSettings {
   dateFormat: string;
   microsoftEnabled: boolean;
   googleEnabled: boolean;
+  logoUrl: string;
+  logoSize: number;
+  showWeather: boolean;
+  showLogo: boolean;
 }
 
 interface MeetingRoomDisplayProps {
@@ -227,6 +231,12 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
           month: 'short',
           day: 'numeric'
         });
+      case 'weekday-day-month':
+        const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const day = date.getDate();
+        const month = date.toLocaleDateString('en-US', { month: 'long' });
+        const year = date.getFullYear();
+        return `${weekday} ${day}, ${month}, ${year}`;
       case 'full':
       default:
         return date.toLocaleDateString('en-US', {
@@ -263,6 +273,20 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
     return fontSizeMap[settings.roomNameFontSize] || 'text-4xl';
   };
 
+  const getLogoSize = () => {
+    const logoSizeMap: { [key: number]: number } = {
+      1: 64,  // Extra Small
+      2: 96,  // Small
+      3: 128, // Medium
+      4: 160, // Large
+      5: 192, // Extra Large
+      6: 224, // Huge
+      7: 256, // Massive
+      8: 288  // Giant
+    };
+    return logoSizeMap[settings.logoSize] || 160;
+  };
+
   const handleQuickBook = (duration: string) => {
     console.log(`Booking room for ${duration}`);
     // In a real app, this would connect to a booking system
@@ -276,17 +300,7 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
     setRoomStatus(statuses[nextIndex]);
   };
 
-  const getBorderClass = () => {
-    const thickness = `border-${settings.borderThickness}`;
-    const color = (() => {
-      switch (roomStatus) {
-        case 'warning': return 'border-amber-500';
-        case 'unavailable': return 'border-red-500';
-        default: return 'border-gray-600';
-      }
-    })();
-    return `${thickness} ${color}`;
-  };
+  // Removed getBorderStyle function as we're now using background color approach
 
   const getStatusBadge = () => {
     switch (roomStatus) {
@@ -356,11 +370,47 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
     backgroundRepeat: 'no-repeat'
   } : {};
 
+  const borderThickness = parseInt(settings.borderThickness);
+  const hasBorder = borderThickness > 0;
+
   return (
-    <div className={`h-screen ${getBorderClass()} rounded-3xl transition-all duration-1000 overflow-hidden`}>
+    <div className="h-screen w-screen fixed inset-0">
+      {/* Border layer - only show when border thickness > 0 */}
+      {hasBorder && (
+        <div 
+          className="absolute inset-0 transition-all duration-1000" 
+          style={{
+            backgroundColor: (() => {
+              switch (roomStatus) {
+                case 'warning': return '#f59e0b'; // amber-500
+                case 'unavailable': return '#ef4444'; // red-500
+                default: return '#000000'; // black
+              }
+            })()
+          }}
+        />
+      )}
+      
+      {/* Background layer - fills screen when no border, has margin when border exists */}
       <div 
-        className="h-full bg-black text-white flex flex-col p-6"
-        style={containerStyle}
+        className={`absolute bg-black ${hasBorder ? 'rounded-3xl' : ''}`}
+        style={{
+          margin: hasBorder ? `${borderThickness}px` : '0',
+          height: hasBorder ? `calc(100vh - ${borderThickness * 2}px)` : '100vh',
+          width: hasBorder ? `calc(100vw - ${borderThickness * 2}px)` : '100vw',
+          ...containerStyle
+        }}
+      />
+      
+      {/* Content layer */}
+      <div 
+        className="relative text-white flex flex-col overflow-hidden z-10"
+        style={{
+          margin: hasBorder ? `${borderThickness}px` : '0',
+          height: hasBorder ? `calc(100vh - ${borderThickness * 2}px)` : '100vh',
+          width: hasBorder ? `calc(100vw - ${borderThickness * 2}px)` : '100vw',
+          padding: '24px'
+        }}
       >
       {/* Header with room name and logo */}
       <div className="flex justify-between items-start mb-6">
@@ -369,10 +419,22 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
           {getStatusBadge()}
         </div>
         
-        {/* Logo area */}
-        <div className="w-24 h-24 bg-gray-800/70 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-600">
-          <span className="text-gray-400 text-xs text-center">Logo</span>
-        </div>
+        {/* Logo area - only show if enabled */}
+        {settings.showLogo && (
+          <div className="rounded-2xl flex items-center justify-center overflow-hidden">
+            {settings.logoUrl && (
+              <img 
+                src={settings.logoUrl} 
+                alt="Room Logo" 
+                className="object-contain"
+                style={{
+                  maxWidth: `${getLogoSize()}px`,
+                  maxHeight: `${getLogoSize()}px`
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main content area - split layout */}
@@ -391,15 +453,17 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
                 </div>
               </div>
               
-              {/* Weather */}
-              <div className="flex items-center gap-3 bg-gray-800/70 backdrop-blur-sm rounded-2xl p-4 border border-gray-700">
-                {getWeatherIcon(weather.icon)}
-                <div>
-                  <div className="text-2xl text-white font-medium">{convertTemperature(weather.temperature)}{getTemperatureUnit()}</div>
-                  <div className="text-sm text-gray-300">{weather.condition}</div>
-                  <div className="text-xs text-gray-400">{weather.location}</div>
+              {/* Weather - only show if enabled */}
+              {settings.showWeather && (
+                <div className="flex items-center gap-3 bg-gray-800/70 backdrop-blur-sm rounded-2xl p-4 border border-gray-700">
+                  {getWeatherIcon(weather.icon)}
+                  <div>
+                    <div className="text-2xl text-white font-medium">{convertTemperature(weather.temperature)}{getTemperatureUnit()}</div>
+                    <div className="text-sm text-gray-300">{weather.condition}</div>
+                    <div className="text-xs text-gray-400">{weather.location}</div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
