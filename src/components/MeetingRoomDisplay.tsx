@@ -30,6 +30,8 @@ interface WeatherData {
 interface AppSettings {
   roomName: string;
   roomNameFontSize: number;
+  timeFontSize: number;
+  dateFontSize: number;
   borderThickness: string;
   enableBackgrounds: boolean;
   displayTimeout: string;
@@ -273,6 +275,34 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
     return fontSizeMap[settings.roomNameFontSize] || 'text-4xl';
   };
 
+  const getTimeFontSizeClass = () => {
+    const fontSizeMap: { [key: number]: string } = {
+      1: 'text-lg',
+      2: 'text-xl',
+      3: 'text-2xl',
+      4: 'text-4xl',
+      5: 'text-5xl',
+      6: 'text-6xl',
+      7: 'text-7xl',
+      8: 'text-8xl'
+    };
+    return fontSizeMap[settings.timeFontSize] || 'text-6xl';
+  };
+
+  const getDateFontSizeClass = () => {
+    const fontSizeMap: { [key: number]: string } = {
+      1: 'text-lg',
+      2: 'text-xl',
+      3: 'text-2xl',
+      4: 'text-4xl',
+      5: 'text-5xl',
+      6: 'text-6xl',
+      7: 'text-7xl',
+      8: 'text-8xl'
+    };
+    return fontSizeMap[settings.dateFontSize] || 'text-xl';
+  };
+
   const getLogoSize = () => {
     const logoSizeMap: { [key: number]: number } = {
       1: 64,  // Extra Small
@@ -445,10 +475,10 @@ export function MeetingRoomDisplay({ onOpenSettings, settings }: MeetingRoomDisp
           <div className="mb-6">
             <div className="flex items-start gap-8">
               <div className="flex-1">
-                <div className="text-6xl mb-2 tabular-nums text-white font-medium">
+                <div className={`${getTimeFontSizeClass()} mb-2 tabular-nums text-white font-medium`}>
                   {formatTime(currentTime)}
                 </div>
-                <div className="text-xl text-gray-300 font-normal">
+                <div className={`${getDateFontSizeClass()} text-gray-300 font-normal`}>
                   {formatDate(currentTime)}
                 </div>
               </div>

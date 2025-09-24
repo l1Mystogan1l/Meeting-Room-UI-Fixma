@@ -7,6 +7,8 @@ type AppView = 'display' | 'settings';
 interface AppSettings {
   roomName: string;
   roomNameFontSize: number;
+  timeFontSize: number;
+  dateFontSize: number;
   borderThickness: string;
   enableBackgrounds: boolean;
   displayTimeout: string;
@@ -45,6 +47,8 @@ export default function App() {
   const [settings, setSettings] = useState<AppSettings>({
     roomName: 'Conference Room A',
     roomNameFontSize: 4,
+    timeFontSize: 6,
+    dateFontSize: 2,
     borderThickness: '8',
     enableBackgrounds: false,
     displayTimeout: '30',

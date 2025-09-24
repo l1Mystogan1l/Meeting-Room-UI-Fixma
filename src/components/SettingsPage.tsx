@@ -13,6 +13,8 @@ import { ArrowLeft, Save, Calendar, CheckCircle, XCircle, Clock, Upload, X } fro
 interface AppSettings {
   roomName: string;
   roomNameFontSize: number;
+  timeFontSize: number;
+  dateFontSize: number;
   borderThickness: string;
   enableBackgrounds: boolean;
   displayTimeout: string;
@@ -47,6 +49,8 @@ interface SettingsPageProps {
 export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPageProps) {
   const [roomName, setRoomName] = useState(settings.roomName);
   const [roomNameFontSize, setRoomNameFontSize] = useState(settings.roomNameFontSize);
+  const [timeFontSize, setTimeFontSize] = useState(settings.timeFontSize);
+  const [dateFontSize, setDateFontSize] = useState(settings.dateFontSize);
   const [borderThickness, setBorderThickness] = useState(settings.borderThickness);
   const [enableBackgrounds, setEnableBackgrounds] = useState(settings.enableBackgrounds);
   const [displayTimeout, setDisplayTimeout] = useState(settings.displayTimeout);
@@ -86,6 +90,8 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
     const newSettings = {
       roomName,
       roomNameFontSize,
+      timeFontSize,
+      dateFontSize,
       borderThickness,
       enableBackgrounds,
       displayTimeout,
@@ -459,6 +465,56 @@ export function SettingsPage({ onBack, settings, onSettingsUpdate }: SettingsPag
                 checked={showLogo}
                 onCheckedChange={setShowLogo}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="time-font-size" className="text-gray-300">
+                Time Display Size
+              </Label>
+              <div className="mt-2 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Small</span>
+                  <span className="text-gray-300">{getFontSizeLabel(timeFontSize)}</span>
+                  <span className="text-gray-400">Large</span>
+                </div>
+                <Slider
+                  id="time-font-size"
+                  value={[timeFontSize]}
+                  onValueChange={(values) => setTimeFontSize(values[0])}
+                  min={1}
+                  max={8}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="text-xs text-gray-500">
+                  Adjust the size of the time display on the main screen
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="date-font-size" className="text-gray-300">
+                Date Display Size
+              </Label>
+              <div className="mt-2 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Small</span>
+                  <span className="text-gray-300">{getFontSizeLabel(dateFontSize)}</span>
+                  <span className="text-gray-400">Large</span>
+                </div>
+                <Slider
+                  id="date-font-size"
+                  value={[dateFontSize]}
+                  onValueChange={(values) => setDateFontSize(values[0])}
+                  min={1}
+                  max={8}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="text-xs text-gray-500">
+                  Adjust the size of the date display on the main screen
+                </div>
+              </div>
             </div>
           </div>
         </Card>
